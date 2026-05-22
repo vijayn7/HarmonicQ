@@ -1,0 +1,26 @@
+{
+  "configurations": [
+    {
+      "name": "mac",
+      "includePath": [
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/src",
+        "/usr/local/include",
+        "/opt/homebrew/include"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/clang++",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "macos-clang-x64",
+      "browse": {
+        "path": [
+          "${workspaceFolder}/include",
+          "/usr/local/include"
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      }
+    }
+  ],
+  "version": 4
+}
