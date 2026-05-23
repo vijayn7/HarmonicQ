@@ -16,8 +16,11 @@ CLR_RED := \033[31m
 
 # Optional package prefixes (brew) — empty if not installed
 NLOHMANN_PREFIX ?= $(shell brew --prefix nlohmann-json 2>/dev/null || echo "")
-PISTACHE_PREFIX ?= $(shell brew --prefix pistache 2>/dev/null || echo "")
-PISTACHE_LOCAL_INCLUDE ?= $(wildcard dependencies/pistache/include)
+
+# Prefer the vendored Pistache build so the binary matches the headers in this repo.
+PISTACHE_ROOT ?= $(abspath dependencies/pistache)
+PISTACHE_INCLUDE_DIR ?= $(PISTACHE_ROOT)/include
+PISTACHE_LIB_DIR ?= $(PISTACHE_ROOT)/build/src
 
 # Essentia install used by the project (override if needed)
 ESSENTIA_PREFIX ?= /Users/$(USER)/.local/share/harmonicq/essentia-install
@@ -29,17 +32,12 @@ ESSENTIA_CFLAGS := $(shell pkg-config --cflags --silence-errors essentia 2>/dev/
 ESSENTIA_LIBS   := $(shell pkg-config --libs --silence-errors essentia 2>/dev/null)
 
 # Build include flags
-INCLUDES := $(ESSENTIA_CFLAGS)
+INCLUDES := $(ESSENTIA_CFLAGS) -I$(PISTACHE_INCLUDE_DIR)
 ifneq ($(NLOHMANN_PREFIX),)
 INCLUDES += -I$(NLOHMANN_PREFIX)/include
 endif
-ifneq ($(PISTACHE_PREFIX),)
-INCLUDES += -I$(PISTACHE_PREFIX)/include
-LDFLAGS  += -L$(PISTACHE_PREFIX)/lib -lpistache -Wl,-rpath,$(PISTACHE_PREFIX)/lib
-endif
-ifneq ($(PISTACHE_LOCAL_INCLUDE),)
-INCLUDES += -I$(PISTACHE_LOCAL_INCLUDE)
-endif
+
+LDFLAGS += -L$(PISTACHE_LIB_DIR) -lpistache -Wl,-rpath,$(PISTACHE_LIB_DIR)
 
 LDFLAGS += $(ESSENTIA_LIBS) -Wl,-rpath,$(ESSENTIA_PREFIX)/lib
 
@@ -67,6 +65,11 @@ $(BUILD_DIR)/%.o: $(SRCDIR)/%.cpp
 build: $(TARGET)
 
 run: build
+	@PORT_PIDS=$$(lsof -ti tcp:9080 2>/dev/null); \
+	if [ -n "$$PORT_PIDS" ]; then \
+		printf "$(CLR_YELLOW)Stopping processes on port 9080: %s$(CLR_RESET)\n" "$$PORT_PIDS"; \
+		kill -9 $$PORT_PIDS || true; \
+	fi
 	@printf "\n$(CLR_BLUE)================================ Run Output ================================$(CLR_RESET)\n"
 	@printf "$(CLR_YELLOW)Running %s$(CLR_RESET)\n" "$(TARGET)"
 	@./$(TARGET) || { printf "$(CLR_RED)Program exited with non-zero status$(CLR_RESET)\n"; exit 1; }
