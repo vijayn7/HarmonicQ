@@ -17,6 +17,7 @@ CLR_RED := \033[31m
 # Optional package prefixes (brew) — empty if not installed
 NLOHMANN_PREFIX ?= $(shell brew --prefix nlohmann-json 2>/dev/null || echo "")
 PISTACHE_PREFIX ?= $(shell brew --prefix pistache 2>/dev/null || echo "")
+PISTACHE_LOCAL_INCLUDE ?= $(wildcard dependencies/pistache/include)
 
 # Essentia install used by the project (override if needed)
 ESSENTIA_PREFIX ?= /Users/$(USER)/.local/share/harmonicq/essentia-install
@@ -35,6 +36,9 @@ endif
 ifneq ($(PISTACHE_PREFIX),)
 INCLUDES += -I$(PISTACHE_PREFIX)/include
 LDFLAGS  += -L$(PISTACHE_PREFIX)/lib -lpistache -Wl,-rpath,$(PISTACHE_PREFIX)/lib
+endif
+ifneq ($(PISTACHE_LOCAL_INCLUDE),)
+INCLUDES += -I$(PISTACHE_LOCAL_INCLUDE)
 endif
 
 LDFLAGS += $(ESSENTIA_LIBS) -Wl,-rpath,$(ESSENTIA_PREFIX)/lib

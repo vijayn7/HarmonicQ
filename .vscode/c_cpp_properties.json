@@ -1,26 +1,31 @@
 {
-  "configurations": [
-    {
-      "name": "mac",
-      "includePath": [
-        "${workspaceFolder}/include",
-        "${workspaceFolder}/src",
-        "/usr/local/include",
-        "/opt/homebrew/include"
-      ],
-      "defines": [],
-      "compilerPath": "/usr/bin/clang++",
-      "cStandard": "c11",
-      "cppStandard": "c++17",
-      "intelliSenseMode": "macos-clang-x64",
-      "browse": {
-        "path": [
-          "${workspaceFolder}/include",
-          "/usr/local/include"
-        ],
-        "limitSymbolsToIncludedHeaders": true
-      }
-    }
-  ],
-  "version": 4
+    "configurations": [
+        {
+            "name": "mac",
+            "includePath": [
+                "/usr/local/include",
+                "/opt/homebrew/include",
+                "/opt/homebrew/opt/eigen/include/eigen3",
+                "${workspaceFolder}/Analyzer/src",
+                "${workspaceFolder}/Analyzer/dependencies/pistache/include",
+                "/Users/vnannapu/.local/share/harmonicq/essentia-install/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang++",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-x64",
+            "browse": {
+                "path": [
+                    "/usr/local/include",
+                    "/opt/homebrew/opt/eigen/include/eigen3",
+                    "${workspaceFolder}/Analyzer/src",
+                    "${workspaceFolder}/Analyzer/dependencies/pistache/include",
+                    "/Users/vnannapu/.local/share/harmonicq/essentia-install/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
 }
