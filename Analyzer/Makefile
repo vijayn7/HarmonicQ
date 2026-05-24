@@ -65,11 +65,8 @@ $(BUILD_DIR)/%.o: $(SRCDIR)/%.cpp
 build: $(TARGET)
 
 run: build
-	@PORT_PIDS=$$(lsof -ti tcp:9080 2>/dev/null); \
-	if [ -n "$$PORT_PIDS" ]; then \
-		printf "$(CLR_YELLOW)Stopping processes on port 9080: %s$(CLR_RESET)\n" "$$PORT_PIDS"; \
-		kill -9 $$PORT_PIDS || true; \
-	fi
+	@# Robustly kill any process listening on port 9080, then wait for port to free.
+	@sh -c 'set -euo pipefail; PORT=9080; PIDS=$$(lsof -ti tcp:$$PORT 2>/dev/null || true) || true; if [ -n "$$PIDS" ]; then printf "$(CLR_YELLOW)Stopping processes on port $$PORT: %s$(CLR_RESET)\n" "$$PIDS"; EXTRA_PIDS=$$(ps -o ppid= -p $$PIDS 2>/dev/null || true | tr "\n" " ") || true; if [ -n "$$EXTRA_PIDS" ]; then printf "$(CLR_YELLOW)Also stopping parent PIDs: %s$(CLR_RESET)\n" "$$EXTRA_PIDS"; kill -9 $$EXTRA_PIDS >/dev/null 2>&1 || true; fi; kill -9 $$PIDS >/dev/null 2>&1 || true; fi; WAIT=20; COUNT=0; STILL=""; while [ $$COUNT -lt $$WAIT ]; do sleep 0.1; STILL=$$(lsof -ti tcp:$$PORT 2>/dev/null || true) || true; if [ -z "$$STILL" ]; then break; fi; COUNT=$$((COUNT+1)); done; if [ -n "$$STILL" ]; then printf "$(CLR_RED)Port $$PORT still in use after kill attempts: %s$(CLR_RESET)\n" "$$STILL"; printf "$(CLR_RED)Detailed socket info:$(CLR_RESET)\n"; lsof -i tcp:$$PORT || true; printf "$(CLR_RED)Aborting run due to port conflict$(CLR_RESET)\n"; exit 1; fi'
 	@printf "\n$(CLR_BLUE)================================ Run Output ================================$(CLR_RESET)\n"
 	@printf "$(CLR_YELLOW)Running %s$(CLR_RESET)\n" "$(TARGET)"
 	@./$(TARGET) || { printf "$(CLR_RED)Program exited with non-zero status$(CLR_RESET)\n"; exit 1; }
