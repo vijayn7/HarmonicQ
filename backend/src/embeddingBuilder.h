@@ -8,25 +8,10 @@
 #include <essentia/algorithmfactory.h>
 #include <essentia/essentia.h>
 
+#include "featureResult.h"
+
 using essentia::standard::AlgorithmFactory;
 using essentia::Real;
-
-// Public result returned by the embedding builder. Lightweight POD-like
-// structure so callers (server) can read fields directly.
-struct FeatureResult {
-	float              bpm        = 0.0f;
-	std::string        key;
-	std::string        mode;
-	std::string        camelot;
-	int                keyIndex   = 0;
-	float              strength   = 0.0f;
-	float              energy     = 0.0f;
-	float              centroid   = 0.0f;
-	float              duration   = 0.0f;
-	std::vector<float> chroma;         // 12 values
-	std::vector<float> mfcc;           // 13 values
-	std::vector<float> faissVector;    // 28 normalized values
-};
 
 class EmbeddingBuilder {
 public:
@@ -39,6 +24,7 @@ public:
 	// Build FeatureResult from raw audio bytes (WAV, PCM, etc.). Throws
 	// std::runtime_error on failure.
 	FeatureResult build(const std::string& audioBytes);
+	FeatureResult buildFromPath(const std::string& path);
 
 private:
 	AlgorithmFactory* factory_ = nullptr;

@@ -60,11 +60,11 @@ all: build
 
 $(TARGET): $(OBJS)
 	@mkdir -p $(BUILD_DIR)
-	@if [ -f "$(ESSENTIA_PREFIX)/lib/libessentia.dylib" ]; then \
-		install_name_tool -id "$(ESSENTIA_PREFIX)/lib/libessentia.dylib" "$(ESSENTIA_PREFIX)/lib/libessentia.dylib" >/dev/null 2>&1 || true; \
-	fi
 	@printf "$(CLR_BLUE)Linking %s...$(CLR_RESET)\n" "$@"
 	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS) || { printf "$(CLR_RED)Link failed for %s$(CLR_RESET)\n" "$@"; exit 1; }
+	@if [ -f "/usr/local/lib/libessentia.dylib" ]; then \
+		install_name_tool -change "/Users/vnannapu/Desktop/Projects/HarmonicQ/Analyzer/dependencies/essentia/build/src/libessentia.dylib" "/usr/local/lib/libessentia.dylib" "$@" >/dev/null 2>&1 || true; \
+	fi
 	@printf "$(CLR_GREEN)Build succeeded: %s$(CLR_RESET)\n" "$@"
 
 $(BUILD_DIR)/%.o: $(SRCDIR)/%.cpp

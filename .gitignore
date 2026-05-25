@@ -1,3 +1,4 @@
-Analyzer/build/
-Analyzer/dependencies/
+backend/build/
+backend/dependencies/
+backend/hq.db*
 .DS_Store

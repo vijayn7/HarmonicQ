@@ -6,8 +6,8 @@
                 "/usr/local/include",
                 "/opt/homebrew/include",
                 "/opt/homebrew/opt/eigen/include/eigen3",
-                "${workspaceFolder}/Analyzer/src",
-                "${workspaceFolder}/Analyzer/dependencies/pistache/include",
+                "${workspaceFolder}/backend/src",
+                "${workspaceFolder}/backend/dependencies/pistache/include",
                 "/Users/vnannapu/.local/share/harmonicq/essentia-install/include"
             ],
             "defines": [],
@@ -19,8 +19,8 @@
                 "path": [
                     "/usr/local/include",
                     "/opt/homebrew/opt/eigen/include/eigen3",
-                    "${workspaceFolder}/Analyzer/src",
-                    "${workspaceFolder}/Analyzer/dependencies/pistache/include",
+                    "${workspaceFolder}/backend/src",
+                    "${workspaceFolder}/backend/dependencies/pistache/include",
                     "/Users/vnannapu/.local/share/harmonicq/essentia-install/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true
