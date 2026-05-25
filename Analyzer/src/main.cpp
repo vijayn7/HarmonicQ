@@ -21,6 +21,7 @@
 #include "embeddingBuilder.h"
 #include "database.h"
 #include <unistd.h>
+#include <event2/thread.h>
 
 using namespace Pistache;
 
@@ -374,6 +375,12 @@ public:
 
 int main() {
     essentia::init();
+    std::cerr << "[main] calling evthread_use_pthreads() to init libevent thread support" << std::endl;
+    if (evthread_use_pthreads() != 0) {
+        std::cerr << "[main] warning: evthread_use_pthreads() returned non-zero" << std::endl;
+    } else {
+        std::cerr << "[main] evthread_use_pthreads() succeeded" << std::endl;
+    }
 
     Port port(9080);
     Address addr(Ipv4::any(), port);

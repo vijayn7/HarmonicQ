@@ -21,6 +21,7 @@
 #include "embeddingBuilder.h"
 #include "database.h"
 #include <unistd.h>
+#include <event2/thread.h>
 
 using namespace Pistache;
 
@@ -29,6 +30,7 @@ private:
     Rest::Router router;
     std::shared_ptr<Http::Endpoint> endpoint;
     Port listenPort;
+    Address addr_;
 
     std::unique_ptr<faiss::Index> index_;
     std::mutex indexMutex_;
@@ -81,22 +83,37 @@ public:
         : listenPort(addr.port())
         , db_(dbPath)
         , indexPath_(indexPath)
+        , addr_(addr)
     {
-        endpoint = std::make_shared<Http::Endpoint>(addr);
+        std::cerr << "[Server ctor] deferring Http::Endpoint construction to init()" << std::endl;
 
+        std::cerr << "[Server ctor] checking for existing FAISS index at: " << indexPath_ << std::endl;
         if (std::filesystem::exists(indexPath_)) {
+            std::cerr << "[Server ctor] index file exists; reading index" << std::endl;
             index_.reset(faiss::read_index(indexPath_.c_str()));
+            std::cerr << "[Server ctor] index read; dimension=" << (index_ ? index_->d : -1) << std::endl;
+            if (!index_) {
+                throw std::runtime_error("failed to read faiss index");
+            }
             if (index_->d != 28) {
                 throw std::runtime_error("loaded FAISS index dimension mismatch; expected 28");
             }
         } else {
+            std::cerr << "[Server ctor] no index file; creating new IndexFlatL2(28)" << std::endl;
             index_ = std::make_unique<faiss::IndexFlatL2>(28);
+            std::cerr << "[Server ctor] created new FAISS index; d=" << index_->d << std::endl;
         }
 
+        std::cerr << "[Server ctor] building faissId->songId map from DB" << std::endl;
         faissIdToSongId_ = db_.buildFaissIdMap();
+        std::cerr << "[Server ctor] built faiss map; size=" << faissIdToSongId_.size() << std::endl;
     }
 
     void init(size_t threads = 2) {
+        // Construct the Http::Endpoint here to avoid early crashes during global/static init
+        std::cerr << "[Server::init] constructing Http::Endpoint with addr" << std::endl;
+        endpoint = std::make_shared<Http::Endpoint>(addr_);
+
         auto opts = Http::Endpoint::options()
                 .threads(threads)
             .maxRequestSize(50 * 1024 * 1024)
@@ -373,23 +390,46 @@ public:
 };
 
 int main() {
-    essentia::init();
+    std::cerr << "[main] starting process, about to init essentia" << std::endl;
+    try {
+        essentia::init();
+        std::cerr << "[main] essentia::init() returned" << std::endl;
+    } catch (const std::exception& ex) {
+        std::cerr << "[main] essentia::init() threw: " << ex.what() << std::endl;
+        return 2;
+    } catch (...) {
+        std::cerr << "[main] essentia::init() threw unknown exception" << std::endl;
+        return 3;
+    }
+
+    std::cerr << "[main] calling evthread_use_pthreads() to init libevent thread support" << std::endl;
+    if (evthread_use_pthreads() != 0) {
+        std::cerr << "[main] warning: evthread_use_pthreads() returned non-zero" << std::endl;
+    } else {
+        std::cerr << "[main] evthread_use_pthreads() succeeded" << std::endl;
+    }
 
     Port port(9080);
     Address addr(Ipv4::any(), port);
 
-    Server server(addr, "./hq.db", "./hq.index");
+    std::cerr << "[main] constructing Server" << std::endl;
     try {
+        Server server(addr, "./hq.db", "./hq.index");
+        std::cerr << "[main] Server constructed; calling init/start" << std::endl;
         server.init();
         server.start();
-        // Log server shutdown
-        std::cout << "Server shutting down..." << std::endl;
+        std::cerr << "[main] server finished normally" << std::endl;
     } catch (const std::exception& ex) {
-        std::cerr << "Failed to start server: " << ex.what() << std::endl;
-        essentia::shutdown();
+        std::cerr << "[main] Failed to start server: " << ex.what() << std::endl;
+        try { essentia::shutdown(); } catch(...){}
+        return 1;
+    } catch (...) {
+        std::cerr << "[main] Failed to start server: unknown exception" << std::endl;
+        try { essentia::shutdown(); } catch(...){}
         return 1;
     }
 
-    essentia::shutdown();
+    std::cerr << "[main] shutting down essentia" << std::endl;
+    try { essentia::shutdown(); } catch(...){}
     return 0;
 }

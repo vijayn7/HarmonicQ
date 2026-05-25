@@ -17,11 +17,16 @@ CLR_RED := \033[31m
 # Optional package prefixes (brew) — empty if not installed
 NLOHMANN_PREFIX ?= $(shell brew --prefix nlohmann-json 2>/dev/null || echo "")
 FAISS_PREFIX ?= $(shell brew --prefix faiss 2>/dev/null || echo "")
+LIBEVENT_PREFIX ?= $(shell brew --prefix libevent 2>/dev/null || echo "")
 
 # Prefer the vendored Pistache build so the binary matches the headers in this repo.
 PISTACHE_ROOT ?= $(abspath dependencies/pistache)
 PISTACHE_INCLUDE_DIR ?= $(PISTACHE_ROOT)/include
+# Prefer the actual build dir if present (older builds use build/, CI uses builda64.cmk.mac/)
 PISTACHE_LIB_DIR ?= $(PISTACHE_ROOT)/build/src
+ifneq (,$(wildcard $(PISTACHE_ROOT)/builda64.cmk.mac/src))
+PISTACHE_LIB_DIR := $(PISTACHE_ROOT)/builda64.cmk.mac/src
+endif
 
 # Essentia install used by the project (override if needed)
 ESSENTIA_PREFIX ?= /Users/$(USER)/.local/share/harmonicq/essentia-install
@@ -40,10 +45,18 @@ endif
 ifneq ($(FAISS_PREFIX),)
 INCLUDES += -I$(FAISS_PREFIX)/include
 endif
+ifneq ($(LIBEVENT_PREFIX),)
+INCLUDES += -I$(LIBEVENT_PREFIX)/include
+endif
 
 LDFLAGS += -L$(PISTACHE_LIB_DIR) -lpistache -Wl,-rpath,$(PISTACHE_LIB_DIR)
 
 LDFLAGS += $(ESSENTIA_LIBS) -Wl,-rpath,$(ESSENTIA_PREFIX)/lib
+
+ifneq ($(LIBEVENT_PREFIX),)
+LDFLAGS += -L$(LIBEVENT_PREFIX)/lib -Wl,-rpath,$(LIBEVENT_PREFIX)/lib
+endif
+LDFLAGS += -levent -levent_pthreads
 
 # Persistence/search backends
 LDFLAGS += -lsqlite3
